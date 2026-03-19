@@ -159,6 +159,9 @@ namespace PanelApp
             if (hwnd == _mpcHwnd) UpdatePosition();
         }
 
+        private static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+        private const uint SWP_NOACTIVATE = 0x0010;
+
         private void UpdatePosition()
         {
             if (_mpcHwnd == IntPtr.Zero || !WinApi.GetWindowRect(_mpcHwnd, out WinApi.RECT rect))
@@ -172,7 +175,8 @@ namespace PanelApp
             double screenY = rect.Top;
             double screenHeight = rect.Height - HEIGHT_OFFSET;
 
-            WinApi.SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, (int)screenX, (int)screenY, (int)this.Width, (int)screenHeight, WinApi.SWP_NOZORDER | WinApi.SWP_SHOWWINDOW);
+            // HWND_TOPMOST and SWP_NOACTIVATE are critical for staying over fullscreen apps without stealing focus
+            WinApi.SetWindowPos(new WindowInteropHelper(this).Handle, HWND_TOPMOST, (int)screenX, (int)screenY, (int)this.Width, (int)screenHeight, SWP_NOACTIVATE | WinApi.SWP_SHOWWINDOW);
             this.Height = screenHeight;
         }
 
@@ -231,7 +235,6 @@ namespace PanelApp
 
         private void PinToggle_Click(object sender, RoutedEventArgs e)
         {
-            PinImage.Opacity = PinToggle.IsChecked == true ? 1.0 : 0.5;
             if (PinToggle.IsChecked == true && !_isPanelVisible) ShowPanel();
         }
 

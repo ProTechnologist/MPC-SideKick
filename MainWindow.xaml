@@ -5,25 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PanelApp"
         mc:Ignorable="d"
-        Title="Companion Panel" Height="600" Width="200"
+        Title="Companion Panel" Height="600" Width="260"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent" 
         Topmost="True" ResizeMode="NoResize" ShowInTaskbar="False">
     
     <Window.Resources>
-        <!-- Custom Slim ScrollBar -->
+        <!-- Modern Ultra-Thin ScrollBar -->
         <Style TargetType="{x:Type ScrollBar}">
-            <Setter Property="Width" Value="6"/>
+            <Setter Property="Width" Value="3"/>
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Grid x:Name="Bg" Background="Transparent" SnapsToDevicePixels="true">
+                        <Grid x:Name="Bg" Background="Transparent">
                             <Track x:Name="PART_Track" IsDirectionReversed="true" IsEnabled="{TemplateBinding IsEnabled}">
                                 <Track.Thumb>
-                                    <Thumb x:Name="Thumb" Background="#66FFFFFF" Opacity="0.5">
+                                    <Thumb x:Name="Thumb" Background="#88FFFFFF">
                                         <Thumb.Template>
                                             <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Rectangle Fill="{TemplateBinding Background}" RadiusX="3" RadiusY="3" />
+                                                <Rectangle Fill="{TemplateBinding Background}" RadiusX="1.5" RadiusY="1.5" />
                                             </ControlTemplate>
                                         </Thumb.Template>
                                     </Thumb>
@@ -44,19 +44,19 @@
         </Storyboard>
         <Storyboard x:Key="SlideOut">
             <DoubleAnimation Storyboard.TargetName="MainContent" Storyboard.TargetProperty="(UIElement.RenderTransform).(TranslateTransform.X)"
-                             To="-200" Duration="0:0:0.3" AccelerationRatio="0.8"/>
+                             To="-260" Duration="0:0:0.3" AccelerationRatio="0.8"/>
             <DoubleAnimation Storyboard.TargetName="MainContent" Storyboard.TargetProperty="Opacity"
                              To="0" Duration="0:0:0.3"/>
         </Storyboard>
     </Window.Resources>
 
     <Grid x:Name="RootGrid" Background="Transparent">
-        <Border x:Name="MainContent" Background="#EE1E1E1E" CornerRadius="0,8,8,0" Margin="0,5,0,5" BorderBrush="#33FFFFFF" BorderThickness="0,1,1,1">
+        <Border x:Name="MainContent" Background="#F2121212" CornerRadius="0,12,12,0" Margin="0,5,0,5" BorderBrush="#22FFFFFF" BorderThickness="0,1,1,1">
             <Border.RenderTransform>
-                <TranslateTransform X="-200"/>
+                <TranslateTransform X="-260"/>
             </Border.RenderTransform>
             <Border.Effect>
-                <DropShadowEffect BlurRadius="15" ShadowDepth="0" Opacity="0.5"/>
+                <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.7"/>
             </Border.Effect>
             
             <Grid>
@@ -67,30 +67,46 @@
                 </Grid.RowDefinitions>
                 
                 <!-- Icon Toolbar -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="15,15,15,5" HorizontalAlignment="Center">
-                    <Button Click="SelectFolder_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="0,0,10,0" x:Name="FolderBtn">
-                        <Button.ToolTip>
-                            <ToolTip x:Name="FolderTooltip" Content="Select Video Folder"/>
-                        </Button.ToolTip>
-                        <Image Source="/folder-icon.png" Width="24" Height="24"/>
-                    </Button>
-                    
-                    <ToggleButton x:Name="PinToggle" Click="PinToggle_Click" Margin="0,0,10,0" ToolTip="Pin/Unpin Panel" Background="Transparent" BorderThickness="0">
-                        <Image Source="/pin-icon.png" Width="24" Height="24" x:Name="PinImage" Opacity="0.5"/>
-                    </ToggleButton>
+                <Grid Grid.Row="0" Margin="10,20,10,15">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                        <Button Click="SelectFolder_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="8,0">
+                            <Button.ToolTip><ToolTip x:Name="FolderTooltip" Content="Select Video Folder"/></Button.ToolTip>
+                            <Image Source="/folder-icon.png" Width="24" Height="24" Opacity="0.9"/>
+                        </Button>
+                        
+                        <ToggleButton x:Name="PinToggle" Click="PinToggle_Click" Background="Transparent" BorderThickness="0" Margin="8,0">
+                            <ToggleButton.Template>
+                                <ControlTemplate TargetType="ToggleButton">
+                                    <Border x:Name="BtnBorder" Background="Transparent" CornerRadius="6" Padding="6">
+                                        <Image Source="/pin-icon.png" Width="24" Height="24" x:Name="PinImage" Opacity="0.4"/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsChecked" Value="True">
+                                            <Setter TargetName="PinImage" Property="Opacity" Value="1.0"/>
+                                            <Setter TargetName="BtnBorder" Property="Background" Value="#33FFFFFF"/>
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="BtnBorder" Property="Background" Value="#1AFFFFFF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </ToggleButton.Template>
+                        </ToggleButton>
 
-                    <Button Click="Settings_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Settings">
-                        <Image Source="/settings-icon.png" Width="24" Height="24"/>
-                    </Button>
-                </StackPanel>
+                        <Button Click="Settings_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="8,0">
+                            <Image Source="/settings-icon.png" Width="24" Height="24" Opacity="0.9"/>
+                        </Button>
+                    </StackPanel>
+                </Grid>
 
                 <!-- Search Box -->
-                <Border Grid.Row="1" Margin="15,5,15,10" Background="#1AFFFFFF" CornerRadius="4" BorderBrush="#33FFFFFF" BorderThickness="1">
+                <Border Grid.Row="1" Margin="15,0,15,20" Background="#1AFFFFFF" CornerRadius="8" BorderBrush="#1AFFFFFF" BorderThickness="1">
                     <Grid>
                         <TextBox x:Name="SearchBox" Background="Transparent" Foreground="White" BorderThickness="0" 
-                                 Padding="5,3" TextChanged="SearchBox_TextChanged" VerticalContentAlignment="Center"/>
-                        <TextBlock IsHitTestVisible="False" Text="Search videos..." VerticalAlignment="Center" 
-                                   HorizontalAlignment="Left" Margin="8,0,0,0" Foreground="#44FFFFFF">
+                                 Padding="10,6" TextChanged="SearchBox_TextChanged" VerticalContentAlignment="Center"
+                                 CaretBrush="White" SelectionBrush="#44FFFFFF" FontSize="13"/>
+                        <TextBlock IsHitTestVisible="False" Text="Search your library..." VerticalAlignment="Center" 
+                                   HorizontalAlignment="Left" Margin="12,0,0,0" Foreground="#33FFFFFF" FontSize="13">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
                                     <Setter Property="Visibility" Value="Collapsed"/>
@@ -105,35 +121,55 @@
                     </Grid>
                 </Border>
 
+                <!-- Video List -->
                 <ListView x:Name="VideoListView" Grid.Row="2" Background="Transparent" BorderThickness="0" 
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          MouseDoubleClick="VideoListView_MouseDoubleClick" Margin="5">
+                          MouseDoubleClick="VideoListView_MouseDoubleClick" Padding="0" Margin="0">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Margin="5" Width="160">
-                                <Border CornerRadius="6" ClipToBounds="True">
-                                    <Image Source="{Binding Thumbnail}" Width="150" Height="85" Stretch="UniformToFill"/>
+                            <Grid Margin="0,2" Width="250" Height="140">
+                                <Border CornerRadius="6" ClipToBounds="True" Background="#11FFFFFF">
+                                    <Grid>
+                                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        
+                                        <!-- Multi-line Bottom Gradient Overlay -->
+                                        <Border VerticalAlignment="Bottom" MinHeight="50">
+                                            <Border.Background>
+                                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                    <GradientStop Color="Transparent" Offset="0"/>
+                                                    <GradientStop Color="#E6000000" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Border.Background>
+                                            <TextBlock Text="{Binding FileName}" Foreground="White" FontSize="11" 
+                                                       Margin="10,0,10,8" VerticalAlignment="Bottom"
+                                                       TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                                                       LineHeight="14" LineStackingStrategy="BlockLineHeight"
+                                                       Height="28"/>
+                                        </Border>
+                                    </Grid>
                                 </Border>
-                                <TextBlock Text="{Binding FileName}" Foreground="#CCFFFFFF" FontSize="11" Margin="0,6,0,0" 
-                                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" HorizontalAlignment="Left"/>
-                            </StackPanel>
+                            </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                     <ListView.ItemContainerStyle>
                         <Style TargetType="ListViewItem">
                             <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Padding" Value="0"/>
+                            <Setter Property="Margin" Value="5,3"/>
                             <Setter Property="Template">
                                 <Setter.Value>
                                     <ControlTemplate TargetType="ListViewItem">
-                                        <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="4" CornerRadius="6">
+                                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="8" BorderThickness="2" BorderBrush="Transparent">
                                             <ContentPresenter />
                                         </Border>
                                         <ControlTemplate.Triggers>
                                             <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter TargetName="Border" Property="Background" Value="#1AFFFFFF"/>
+                                                <Setter TargetName="Border" Property="Background" Value="#22FFFFFF"/>
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="#44FFFFFF"/>
                                             </Trigger>
                                             <Trigger Property="IsSelected" Value="True">
                                                 <Setter TargetName="Border" Property="Background" Value="#33FFFFFF"/>
+                                                <Setter TargetName="Border" Property="BorderBrush" Value="#AAFFFFFF"/>
                                             </Trigger>
                                         </ControlTemplate.Triggers>
                                     </ControlTemplate>
