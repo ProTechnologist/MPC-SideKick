@@ -35,7 +35,10 @@ namespace PanelApp
         {
             InitializeComponent();
             _settings = AppSettings.Load();
-            PlaylistListView.ItemsSource = PlaylistManager.Instance.Items;
+            
+            _playlistView = CollectionViewSource.GetDefaultView(PlaylistManager.Instance.Items);
+            _playlistView.Filter = FilterPlaylistVideos;
+            PlaylistListView.ItemsSource = _playlistView;
             
             this.Opacity = 0;
             _stickyHelper = new StickyWindowHelper(this, StickSide.Right, WINDOW_OFFSET, HEIGHT_OFFSET, Path.GetFileNameWithoutExtension(_settings.MediaPlayerPath));
@@ -50,6 +53,16 @@ namespace PanelApp
                 _stickyHelper.UpdatePosition();
                 LoadThumbnailsForPlaylist();
             };
+        }
+
+        private bool FilterPlaylistVideos(object item)
+        {
+            if (item is VideoItem video)
+            {
+                if (string.IsNullOrWhiteSpace(SearchBox.Text)) return true;
+                return video.FileName?.Contains(SearchBox.Text, StringComparison.OrdinalIgnoreCase) ?? false;
+            }
+            return false;
         }
 
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)

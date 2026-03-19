@@ -36,7 +36,7 @@ namespace PanelApp
             if (itemToRemove != null)
             {
                 Items.Remove(itemToRemove);
-                itemToRemove.IsInPlaylist = false; // Mark as not in playlist
+                itemToRemove.IsInPlaylist = false;
                 Save();
             }
         }

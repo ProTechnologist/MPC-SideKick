@@ -62,7 +62,7 @@ namespace PanelApp
                 FolderTooltip.Content = _settings.LastFolderPath;
             }
 
-            // Subscribe to playlist changes to update IsInPlaylist status
+            // Subscribe to playlist changes to update IsInPlaylist status and refresh view
             PlaylistManager.Instance.Items.CollectionChanged += (s, e) =>
             {
                 // Update IsInPlaylist status for all items in the library
@@ -70,6 +70,8 @@ namespace PanelApp
                 {
                     item.IsInPlaylist = PlaylistManager.Instance.Items.Any(p => p.FilePath == item.FilePath);
                 }
+                // Refresh the view to apply the filter (hiding added items)
+                _videoView.Refresh();
             };
         }
 
@@ -77,6 +79,9 @@ namespace PanelApp
         {
             if (item is VideoItem video)
             {
+                // Hide if in playlist
+                if (video.IsInPlaylist) return false;
+
                 if (string.IsNullOrWhiteSpace(SearchBox.Text)) return true;
                 return video.FileName?.Contains(SearchBox.Text, StringComparison.OrdinalIgnoreCase) ?? false;
             }
@@ -224,7 +229,9 @@ namespace PanelApp
                             Int32Rect.Empty,
                             System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());
                     });
-                    return new VideoItem { FilePath = filePath, FileName = Path.GetFileName(filePath), Thumbnail = bitmapSource };
+                    var videoItem = new VideoItem { FilePath = filePath, FileName = Path.GetFileName(filePath), Thumbnail = bitmapSource };
+                    videoItem.IsInPlaylist = PlaylistManager.Instance.Items.Any(p => p.FilePath == filePath);
+                    return videoItem;
                 }
             }
             catch { return null; }
