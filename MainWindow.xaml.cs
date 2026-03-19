@@ -239,11 +239,14 @@ namespace PanelApp
             }
         }
 
-        private void AddToPlaylist_Click(object sender, RoutedEventArgs e)
+        private void TogglePlaylist_Click(object sender, RoutedEventArgs e)
         {
             if (sender is System.Windows.Controls.Button btn && btn.DataContext is VideoItem item)
             {
-                PlaylistManager.Instance.Add(item);
+                if (item.IsInPlaylist)
+                    PlaylistManager.Instance.Remove(item);
+                else
+                    PlaylistManager.Instance.Add(item);
             }
         }
     }

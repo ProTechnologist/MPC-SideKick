@@ -83,6 +83,7 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 
@@ -181,10 +182,11 @@
                                                     <GradientStop Color="#E6000000" Offset="1"/>
                                                 </LinearGradientBrush>
                                             </Border.Background>
-                                            <TextBlock Text="{Binding FileName}" Foreground="White" FontSize="12" 
+                                            <TextBlock Text="{Binding FileName}" Foreground="White" FontSize="13" 
                                                        Margin="10,0,10,8" VerticalAlignment="Bottom"
                                                        TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
-                                                       LineHeight="14" Height="28"/>
+                                                       LineHeight="16" LineStackingStrategy="BlockLineHeight"
+                                                       Height="34"/>
                                         </Border>
 
                                         <!-- Remove (X) Button -->
