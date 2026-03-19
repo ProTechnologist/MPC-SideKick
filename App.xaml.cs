@@ -2,7 +2,7 @@ using System.Configuration;
 using System.Data;
 using System.Windows;
 
-namespace MPC_SideKick;
+namespace PanelApp;
 
 /// <summary>
 /// Interaction logic for App.xaml
