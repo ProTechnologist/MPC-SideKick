@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
@@ -22,43 +24,71 @@ namespace PanelApp
     public partial class MainWindow : Window
     {
         private ObservableCollection<VideoItem> _videoItems = new ObservableCollection<VideoItem>();
-        private string _selectedFolder = string.Empty;
+        private ICollectionView _videoView;
+        private AppSettings _settings;
         private IntPtr _mpcHwnd = IntPtr.Zero;
         private WinApi.WinEventDelegate _winEventDelegate;
         private IntPtr _hHook = IntPtr.Zero;
         private DispatcherTimer _monitorTimer;
         private DispatcherTimer _mouseTimer;
         private bool _isPanelVisible = false;
+        
         private const string MPC_PROCESS_NAME = "mpc-be64";
-        private const string MPC_EXE_PATH = @"C:\Program Files\MPC-BE\mpc-be64.exe";
-        private const int TRIGGER_ZONE = 80; // Doubled from 40 to 80
-        private const int WINDOW_OFFSET = 5; // Pixels to move inside from the left
-        private const int HEIGHT_OFFSET = 10; // Pixels to subtract from height to avoid bottom edge
+        private const int TRIGGER_ZONE = 80;
+        private const int WINDOW_OFFSET = 5;
+        private const int HEIGHT_OFFSET = 10;
 
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
 
         public MainWindow()
         {
             InitializeComponent();
-            SetupTrayIcon();
-            VideoListView.ItemsSource = _videoItems;
+            try { _settings = AppSettings.Load(); } catch { _settings = new AppSettings(); }
             
-            this.Opacity = 0; // Hide until MPC is found
+            _videoView = CollectionViewSource.GetDefaultView(_videoItems);
+            _videoView.Filter = FilterVideos;
+            VideoListView.ItemsSource = _videoView;
+            
+            SetupTrayIcon();
+            this.Opacity = 0;
             
             _winEventDelegate = new WinApi.WinEventDelegate(WinEventCallback);
             
-            _monitorTimer = new DispatcherTimer();
-            _monitorTimer.Interval = TimeSpan.FromSeconds(1);
+            _monitorTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
             _monitorTimer.Tick += MonitorTimer_Tick;
             _monitorTimer.Start();
 
-            _mouseTimer = new DispatcherTimer();
-            _mouseTimer.Interval = TimeSpan.FromMilliseconds(100);
+            _mouseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
             _mouseTimer.Tick += MouseTimer_Tick;
             _mouseTimer.Start();
 
             this.Loaded += MainWindow_Loaded;
             this.Closed += MainWindow_Closed;
+
+            try
+            {
+                if (_settings.RememberLastFolder && !string.IsNullOrEmpty(_settings.LastFolderPath) && Directory.Exists(_settings.LastFolderPath))
+                {
+                    _ = LoadVideosAsync(_settings.LastFolderPath);
+                    FolderTooltip.Content = _settings.LastFolderPath;
+                }
+            }
+            catch { }
+        }
+
+        private bool FilterVideos(object item)
+        {
+            if (item is VideoItem video)
+            {
+                if (string.IsNullOrWhiteSpace(SearchBox.Text)) return true;
+                return video.FileName?.Contains(SearchBox.Text, StringComparison.OrdinalIgnoreCase) ?? false;
+            }
+            return false;
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _videoView.Refresh();
         }
 
         private void SetupTrayIcon()
@@ -80,28 +110,23 @@ namespace PanelApp
                 contextMenu.Items.Add("Exit", null, (s, e) => System.Windows.Application.Current.Shutdown());
                 _notifyIcon.ContextMenuStrip = contextMenu;
             }
-            catch (Exception ex)
-            {
-                File.WriteAllText("tray_error.txt", ex.ToString());
-            }
+            catch (Exception ex) { File.WriteAllText("tray_error.txt", ex.ToString()); }
         }
 
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            UpdatePosition();
-        }
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e) => UpdatePosition();
 
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
             if (_hHook != IntPtr.Zero) WinApi.UnhookWinEvent(_hHook);
             if (_notifyIcon != null) _notifyIcon.Dispose();
+            _settings.Save();
         }
 
         private void MonitorTimer_Tick(object? sender, EventArgs e) => FindMpcWindow();
 
         private void FindMpcWindow()
         {
-            var processes = Process.GetProcessesByName(MPC_PROCESS_NAME);
+            var processes = Process.GetProcessesByName(Path.GetFileNameWithoutExtension(_settings.MediaPlayerPath));
             if (processes.Length > 0)
             {
                 IntPtr hwnd = processes[0].MainWindowHandle;
@@ -117,11 +142,7 @@ namespace PanelApp
             {
                 _mpcHwnd = IntPtr.Zero;
                 this.Opacity = 0;
-                if (_hHook != IntPtr.Zero)
-                {
-                    WinApi.UnhookWinEvent(_hHook);
-                    _hHook = IntPtr.Zero;
-                }
+                if (_hHook != IntPtr.Zero) { WinApi.UnhookWinEvent(_hHook); _hHook = IntPtr.Zero; }
             }
         }
 
@@ -147,9 +168,9 @@ namespace PanelApp
             }
 
             this.Show();
-            double screenX = rect.Left + WINDOW_OFFSET; // Moved inside 5px
+            double screenX = rect.Left + WINDOW_OFFSET;
             double screenY = rect.Top;
-            double screenHeight = rect.Height - HEIGHT_OFFSET; // Reduced height to avoid bottom edge
+            double screenHeight = rect.Height - HEIGHT_OFFSET;
 
             WinApi.SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, (int)screenX, (int)screenY, (int)this.Width, (int)screenHeight, WinApi.SWP_NOZORDER | WinApi.SWP_SHOWWINDOW);
             this.Height = screenHeight;
@@ -158,6 +179,7 @@ namespace PanelApp
         private void MouseTimer_Tick(object? sender, EventArgs e)
         {
             if (_mpcHwnd == IntPtr.Zero) return;
+            if (PinToggle.IsChecked == true) return; // Skip auto-hide if pinned
 
             System.Windows.Point mousePos = GetMousePosition();
             if (!WinApi.GetWindowRect(_mpcHwnd, out WinApi.RECT rect)) return;
@@ -168,20 +190,10 @@ namespace PanelApp
             if (isOverPlayer)
             {
                 double relativeX = mousePos.X - rect.Left;
-                
-                if (relativeX < TRIGGER_ZONE && !_isPanelVisible)
-                {
-                    ShowPanel();
-                }
-                else if (relativeX > this.Width && _isPanelVisible)
-                {
-                    HidePanel();
-                }
+                if (relativeX < TRIGGER_ZONE && !_isPanelVisible) ShowPanel();
+                else if (relativeX > this.Width && _isPanelVisible) HidePanel();
             }
-            else if (_isPanelVisible)
-            {
-                HidePanel();
-            }
+            else if (_isPanelVisible) HidePanel();
         }
 
         private void ShowPanel()
@@ -210,9 +222,27 @@ namespace PanelApp
             var dialog = new Microsoft.Win32.OpenFolderDialog();
             if (dialog.ShowDialog() == true)
             {
-                _selectedFolder = dialog.FolderName;
-                FolderPathText.Text = _selectedFolder;
-                await LoadVideosAsync(_selectedFolder);
+                _settings.LastFolderPath = dialog.FolderName;
+                FolderTooltip.Content = _settings.LastFolderPath;
+                await LoadVideosAsync(dialog.FolderName);
+                _settings.Save();
+            }
+        }
+
+        private void PinToggle_Click(object sender, RoutedEventArgs e)
+        {
+            PinImage.Opacity = PinToggle.IsChecked == true ? 1.0 : 0.5;
+            if (PinToggle.IsChecked == true && !_isPanelVisible) ShowPanel();
+        }
+
+        private void Settings_Click(object sender, RoutedEventArgs e)
+        {
+            var win = new SettingsWindow(_settings);
+            if (win.ShowDialog() == true)
+            {
+                _settings = win.CurrentSettings;
+                _settings.Save();
+                UpdatePosition();
             }
         }
 
@@ -220,6 +250,8 @@ namespace PanelApp
         {
             _videoItems.Clear();
             var extensions = new[] { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" };
+            if (!Directory.Exists(folderPath)) return;
+            
             var files = Directory.EnumerateFiles(folderPath)
                                  .Where(f => extensions.Contains(Path.GetExtension(f).ToLower()))
                                  .ToList();
@@ -246,7 +278,6 @@ namespace PanelApp
                             Int32Rect.Empty,
                             BitmapSizeOptions.FromEmptyOptions());
                     });
-
                     return new VideoItem { FilePath = filePath, FileName = Path.GetFileName(filePath), Thumbnail = bitmapSource };
                 }
             }
@@ -257,8 +288,8 @@ namespace PanelApp
         {
             if (VideoListView.SelectedItem is VideoItem selectedItem)
             {
-                try { Process.Start(new ProcessStartInfo(MPC_EXE_PATH, $"\"{selectedItem.FilePath}\"") { UseShellExecute = true }); }
-                catch (Exception ex) { System.Windows.MessageBox.Show($"Could not launch MPC-BE: {ex.Message}"); }
+                try { Process.Start(new ProcessStartInfo(_settings.MediaPlayerPath, $"\"{selectedItem.FilePath}\"") { UseShellExecute = true }); }
+                catch (Exception ex) { System.Windows.MessageBox.Show($"Could not launch Media Player: {ex.Message}"); }
             }
         }
     }

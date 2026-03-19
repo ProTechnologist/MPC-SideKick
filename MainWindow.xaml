@@ -62,27 +62,50 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 
-                <StackPanel Grid.Row="0" Margin="15,15,15,5">
-                    <Button Click="SelectFolder_Click" Padding="10,6" Background="#33FFFFFF" BorderThickness="0">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="4"/>
-                            </Style>
-                        </Button.Resources>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="📁" Margin="0,0,8,0"/>
-                            <TextBlock Text="Select Folder" Foreground="White" FontWeight="SemiBold"/>
-                        </StackPanel>
+                <!-- Icon Toolbar -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="15,15,15,5" HorizontalAlignment="Center">
+                    <Button Click="SelectFolder_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="0,0,10,0" x:Name="FolderBtn">
+                        <Button.ToolTip>
+                            <ToolTip x:Name="FolderTooltip" Content="Select Video Folder"/>
+                        </Button.ToolTip>
+                        <Image Source="/folder-icon.png" Width="24" Height="24"/>
                     </Button>
-                    <TextBlock x:Name="FolderPathText" Text="No folder selected" Foreground="#88FFFFFF" FontSize="10" 
-                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Margin="0,8,0,0"/>
-                    <Separator Background="#22FFFFFF" Margin="0,10,0,5"/>
+                    
+                    <ToggleButton x:Name="PinToggle" Click="PinToggle_Click" Margin="0,0,10,0" ToolTip="Pin/Unpin Panel" Background="Transparent" BorderThickness="0">
+                        <Image Source="/pin-icon.png" Width="24" Height="24" x:Name="PinImage" Opacity="0.5"/>
+                    </ToggleButton>
+
+                    <Button Click="Settings_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Settings">
+                        <Image Source="/settings-icon.png" Width="24" Height="24"/>
+                    </Button>
                 </StackPanel>
 
-                <ListView x:Name="VideoListView" Grid.Row="1" Background="Transparent" BorderThickness="0" 
+                <!-- Search Box -->
+                <Border Grid.Row="1" Margin="15,5,15,10" Background="#1AFFFFFF" CornerRadius="4" BorderBrush="#33FFFFFF" BorderThickness="1">
+                    <Grid>
+                        <TextBox x:Name="SearchBox" Background="Transparent" Foreground="White" BorderThickness="0" 
+                                 Padding="5,3" TextChanged="SearchBox_TextChanged" VerticalContentAlignment="Center"/>
+                        <TextBlock IsHitTestVisible="False" Text="Search videos..." VerticalAlignment="Center" 
+                                   HorizontalAlignment="Left" Margin="8,0,0,0" Foreground="#44FFFFFF">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+                </Border>
+
+                <ListView x:Name="VideoListView" Grid.Row="2" Background="Transparent" BorderThickness="0" 
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                           MouseDoubleClick="VideoListView_MouseDoubleClick" Margin="5">
                     <ListView.ItemTemplate>

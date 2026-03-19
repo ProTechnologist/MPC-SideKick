@@ -13,6 +13,9 @@
     <None Update="icon.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Resource Include="folder-icon.png" />
+    <Resource Include="settings-icon.png" />
+    <Resource Include="pin-icon.png" />
     <PackageReference Include="Microsoft-WindowsAPICodePack-Shell" Version="1.1.5" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.0" />
   </ItemGroup>
