@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.WindowsAPICodePack.Shell;
@@ -26,8 +27,11 @@ namespace PanelApp
         private WinApi.WinEventDelegate _winEventDelegate;
         private IntPtr _hHook = IntPtr.Zero;
         private DispatcherTimer _monitorTimer;
+        private DispatcherTimer _mouseTimer;
+        private bool _isPanelVisible = false;
         private const string MPC_PROCESS_NAME = "mpc-be64";
         private const string MPC_EXE_PATH = @"C:\Program Files\MPC-BE\mpc-be64.exe";
+        private const int TRIGGER_ZONE = 40; // Pixels from left edge to trigger slide-in
 
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
 
@@ -37,12 +41,19 @@ namespace PanelApp
             SetupTrayIcon();
             VideoListView.ItemsSource = _videoItems;
             
+            this.Opacity = 0; // Hide until MPC is found
+            
             _winEventDelegate = new WinApi.WinEventDelegate(WinEventCallback);
             
             _monitorTimer = new DispatcherTimer();
             _monitorTimer.Interval = TimeSpan.FromSeconds(1);
             _monitorTimer.Tick += MonitorTimer_Tick;
             _monitorTimer.Start();
+
+            _mouseTimer = new DispatcherTimer();
+            _mouseTimer.Interval = TimeSpan.FromMilliseconds(100);
+            _mouseTimer.Tick += MouseTimer_Tick;
+            _mouseTimer.Start();
 
             this.Loaded += MainWindow_Loaded;
             this.Closed += MainWindow_Closed;
@@ -55,8 +66,6 @@ namespace PanelApp
                 _notifyIcon = new System.Windows.Forms.NotifyIcon();
                 _notifyIcon.Visible = true;
                 _notifyIcon.Text = "MPC-BE Companion Panel";
-                
-                // Set a default system icon first
                 _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
 
                 string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
@@ -65,19 +74,9 @@ namespace PanelApp
                     try { _notifyIcon.Icon = new System.Drawing.Icon(iconPath); } catch {}
                 }
 
-                // Add Context Menu
                 var contextMenu = new System.Windows.Forms.ContextMenuStrip();
                 contextMenu.Items.Add("Exit", null, (s, e) => System.Windows.Application.Current.Shutdown());
                 _notifyIcon.ContextMenuStrip = contextMenu;
-
-                _notifyIcon.Click += (s, e) => {
-                    if (e is System.Windows.Forms.MouseEventArgs mouseArgs && mouseArgs.Button == System.Windows.Forms.MouseButtons.Left)
-                    {
-                        this.Show();
-                        this.WindowState = WindowState.Normal;
-                        this.Activate();
-                    }
-                };
             }
             catch (Exception ex)
             {
@@ -92,20 +91,11 @@ namespace PanelApp
 
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
-            if (_hHook != IntPtr.Zero)
-            {
-                WinApi.UnhookWinEvent(_hHook);
-            }
-            if (_notifyIcon != null)
-            {
-                _notifyIcon.Dispose();
-            }
+            if (_hHook != IntPtr.Zero) WinApi.UnhookWinEvent(_hHook);
+            if (_notifyIcon != null) _notifyIcon.Dispose();
         }
 
-        private void MonitorTimer_Tick(object? sender, EventArgs e)
-        {
-            FindMpcWindow();
-        }
+        private void MonitorTimer_Tick(object? sender, EventArgs e) => FindMpcWindow();
 
         private void FindMpcWindow()
         {
@@ -118,11 +108,13 @@ namespace PanelApp
                     _mpcHwnd = hwnd;
                     SetupHook();
                     UpdatePosition();
+                    this.Opacity = 1; 
                 }
             }
             else if (_mpcHwnd != IntPtr.Zero)
             {
                 _mpcHwnd = IntPtr.Zero;
+                this.Opacity = 0;
                 if (_hHook != IntPtr.Zero)
                 {
                     WinApi.UnhookWinEvent(_hHook);
@@ -133,11 +125,7 @@ namespace PanelApp
 
         private void SetupHook()
         {
-            if (_hHook != IntPtr.Zero)
-            {
-                WinApi.UnhookWinEvent(_hHook);
-            }
-
+            if (_hHook != IntPtr.Zero) WinApi.UnhookWinEvent(_hHook);
             uint processId;
             uint threadId = WinApi.GetWindowThreadProcessId(_mpcHwnd, out processId);
             _hHook = WinApi.SetWinEventHook(WinApi.EVENT_OBJECT_LOCATIONCHANGE, WinApi.EVENT_OBJECT_LOCATIONCHANGE, IntPtr.Zero, _winEventDelegate, processId, threadId, WinApi.WINEVENT_OUTOFCONTEXT);
@@ -145,27 +133,74 @@ namespace PanelApp
 
         private void WinEventCallback(IntPtr hWinEventHook, uint eventType, IntPtr hwnd, int idObject, int idChild, uint dwEventThread, uint dwmsEventTime)
         {
-            if (hwnd == _mpcHwnd)
-            {
-                UpdatePosition();
-            }
+            if (hwnd == _mpcHwnd) UpdatePosition();
         }
 
         private void UpdatePosition()
         {
             if (_mpcHwnd == IntPtr.Zero || !WinApi.GetWindowRect(_mpcHwnd, out WinApi.RECT rect))
             {
-                // If MPC is not running, just stay where we are or center
+                this.Hide();
                 return;
             }
 
-            double screenX = rect.Left - this.Width;
+            this.Show();
+            double screenX = rect.Left; // Inside the player
             double screenY = rect.Top;
             double screenHeight = rect.Height;
 
-            // Use SetWindowPos for smooth movement and staying on top
             WinApi.SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, (int)screenX, (int)screenY, (int)this.Width, (int)screenHeight, WinApi.SWP_NOZORDER | WinApi.SWP_SHOWWINDOW);
             this.Height = screenHeight;
+        }
+
+        private void MouseTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_mpcHwnd == IntPtr.Zero) return;
+
+            System.Windows.Point mousePos = GetMousePosition();
+            if (!WinApi.GetWindowRect(_mpcHwnd, out WinApi.RECT rect)) return;
+
+            bool isOverPlayer = mousePos.X >= rect.Left && mousePos.X <= rect.Right &&
+                               mousePos.Y >= rect.Top && mousePos.Y <= rect.Bottom;
+
+            if (isOverPlayer)
+            {
+                double relativeX = mousePos.X - rect.Left;
+                
+                if (relativeX < TRIGGER_ZONE && !_isPanelVisible)
+                {
+                    ShowPanel();
+                }
+                else if (relativeX > this.Width && _isPanelVisible)
+                {
+                    HidePanel();
+                }
+            }
+            else if (_isPanelVisible)
+            {
+                HidePanel();
+            }
+        }
+
+        private void ShowPanel()
+        {
+            _isPanelVisible = true;
+            Storyboard? sb = this.FindResource("SlideIn") as Storyboard;
+            sb?.Begin();
+        }
+
+        private void HidePanel()
+        {
+            _isPanelVisible = false;
+            Storyboard? sb = this.FindResource("SlideOut") as Storyboard;
+            sb?.Begin();
+        }
+
+        private System.Windows.Point GetMousePosition()
+        {
+            WinApi.POINT w32Mouse = new WinApi.POINT();
+            WinApi.GetCursorPos(out w32Mouse);
+            return new System.Windows.Point(w32Mouse.X, w32Mouse.Y);
         }
 
         private async void SelectFolder_Click(object sender, RoutedEventArgs e)
@@ -183,25 +218,14 @@ namespace PanelApp
         {
             _videoItems.Clear();
             var extensions = new[] { ".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv" };
-            
             var files = Directory.EnumerateFiles(folderPath)
                                  .Where(f => extensions.Contains(Path.GetExtension(f).ToLower()))
                                  .ToList();
 
             foreach (var file in files)
             {
-                try
-                {
-                    var item = await Task.Run(() => CreateVideoItem(file));
-                    if (item != null)
-                    {
-                        _videoItems.Add(item);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Error loading thumbnail for {file}: {ex.Message}");
-                }
+                var item = await Task.Run(() => CreateVideoItem(file));
+                if (item != null) _videoItems.Add(item);
             }
         }
 
@@ -212,8 +236,6 @@ namespace PanelApp
                 using (var shellFile = ShellFile.FromFilePath(filePath))
                 {
                     var bitmap = shellFile.Thumbnail.LargeBitmap;
-                    
-                    // Convert GDI+ Bitmap to WPF BitmapSource
                     var bitmapSource = System.Windows.Application.Current.Dispatcher.Invoke(() => 
                     {
                         return Imaging.CreateBitmapSourceFromHBitmap(
@@ -223,39 +245,19 @@ namespace PanelApp
                             BitmapSizeOptions.FromEmptyOptions());
                     });
 
-                    return new VideoItem
-                    {
-                        FilePath = filePath,
-                        FileName = Path.GetFileName(filePath),
-                        Thumbnail = bitmapSource
-                    };
+                    return new VideoItem { FilePath = filePath, FileName = Path.GetFileName(filePath), Thumbnail = bitmapSource };
                 }
             }
-            catch
-            {
-                return null;
-            }
+            catch { return null; }
         }
 
         private void VideoListView_MouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             if (VideoListView.SelectedItem is VideoItem selectedItem)
             {
-                try
-                {
-                    Process.Start(new ProcessStartInfo(MPC_EXE_PATH, $"\"{selectedItem.FilePath}\"") { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    System.Windows.MessageBox.Show($"Could not launch MPC-BE: {ex.Message}");
-                }
+                try { Process.Start(new ProcessStartInfo(MPC_EXE_PATH, $"\"{selectedItem.FilePath}\"") { UseShellExecute = true }); }
+                catch (Exception ex) { System.Windows.MessageBox.Show($"Could not launch MPC-BE: {ex.Message}"); }
             }
-        }
-
-        private void Thumb_DragDelta(object sender, DragDeltaEventArgs e)
-        {
-            this.Left += e.HorizontalChange;
-            this.Top += e.VerticalChange;
         }
     }
 }
