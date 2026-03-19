@@ -10,6 +10,7 @@
         Topmost="True" ResizeMode="NoResize" ShowInTaskbar="False">
     
     <Window.Resources>
+        <local:NotEmptyConverter x:Key="NotEmptyConverter" />
         <!-- Modern Ultra-Thin Floating ScrollBar (2px) -->
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Width" Value="2"/>
@@ -87,12 +88,8 @@
                 
                 <!-- Toolbar -->
                 <Grid Grid.Row="0" Margin="10,20,10,10">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Click="Shuffle_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="8,0" ToolTip="Shuffle Playlist">
-                            <TextBlock Text="🔀" FontSize="18" Foreground="#CC44AAFF"/>
-                        </Button>
-                        
-                        <ToggleButton x:Name="PinToggle" Click="PinToggle_Click" Background="Transparent" BorderThickness="0" Margin="8,0" ToolTip="Pin Playlist">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <ToggleButton x:Name="PinToggle" Click="PinToggle_Click" Background="Transparent" BorderThickness="0" Margin="0,0,8,0" ToolTip="Pin Playlist">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Border x:Name="BtnBorder" Background="Transparent" CornerRadius="6" Padding="4">
@@ -110,15 +107,56 @@
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
-
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Button Click="ClearAll_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="8,0" ToolTip="Clear All">
                             <TextBlock Text="🗑️" FontSize="18" Foreground="#CCFF4444"/>
                         </Button>
                     </StackPanel>
                 </Grid>
 
+                <!-- Sharp Search Box (No Rounded Corners) -->
+                <Border Grid.Row="1" Margin="15,0,15,20" Background="#1A44AAFF" CornerRadius="0" BorderBrush="#1A44AAFF" BorderThickness="1">
+                    <Grid>
+                        <TextBox x:Name="SearchBox" Background="Transparent" Foreground="White" BorderThickness="0" 
+                                 Padding="10,6" TextChanged="SearchBox_TextChanged" VerticalContentAlignment="Center"
+                                 CaretBrush="White" SelectionBrush="#44AAFF" FontSize="16"/>
+                        <TextBlock IsHitTestVisible="False" Text="Search playlist..." VerticalAlignment="Center" 
+                                   HorizontalAlignment="Left" Margin="12,0,0,0" Foreground="#3344AAFF" FontSize="16">
+                            <TextBlock.Style>
+                                <Style TargetType="{x:Type TextBlock}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        
+                        <!-- Clear Search Button -->
+                        <Button x:Name="ClearSearchBtn" Content="×" Click="ClearSearch_Click" 
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                Margin="0,0,8,0" Width="20" Height="20" 
+                                Background="Transparent" Foreground="#66FFFFFF" FontWeight="Bold" FontSize="14"
+                                BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox, Converter={StaticResource NotEmptyConverter}}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                </Border>
+
                 <!-- Playlist View -->
-                <ListView x:Name="PlaylistListView" Grid.Row="1" Background="Transparent" BorderThickness="0" 
+                <ListView x:Name="PlaylistListView" Grid.Row="2" Background="Transparent" BorderThickness="0" 
                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                           MouseDoubleClick="PlaylistListView_MouseDoubleClick" Margin="0" Padding="0"
                           d:ItemsSource="{x:Static local:PlaylistManager.Instance.Items}"

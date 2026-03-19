@@ -61,6 +61,16 @@ namespace PanelApp
                 _ = LoadVideosAsync(_settings.LastFolderPath);
                 FolderTooltip.Content = _settings.LastFolderPath;
             }
+
+            // Subscribe to playlist changes to update IsInPlaylist status
+            PlaylistManager.Instance.Items.CollectionChanged += (s, e) =>
+            {
+                // Update IsInPlaylist status for all items in the library
+                foreach (var item in _videoItems)
+                {
+                    item.IsInPlaylist = PlaylistManager.Instance.Items.Any(p => p.FilePath == item.FilePath);
+                }
+            };
         }
 
         private bool FilterVideos(object item)
@@ -76,6 +86,11 @@ namespace PanelApp
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             _videoView.Refresh();
+        }
+
+        private void ClearSearch_Click(object sender, RoutedEventArgs e)
+        {
+            SearchBox.Clear();
         }
 
         private void SetupTrayIcon()

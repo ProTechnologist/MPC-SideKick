@@ -25,18 +25,28 @@ namespace PanelApp
             if (!Items.Any(i => i.FilePath == item.FilePath))
             {
                 Items.Add(item);
+                item.IsInPlaylist = true; // Mark as in playlist
                 Save();
             }
         }
 
         public void Remove(VideoItem item)
         {
-            Items.Remove(item);
-            Save();
+            var itemToRemove = Items.FirstOrDefault(i => i.FilePath == item.FilePath);
+            if (itemToRemove != null)
+            {
+                Items.Remove(itemToRemove);
+                itemToRemove.IsInPlaylist = false; // Mark as not in playlist
+                Save();
+            }
         }
 
         public void Clear()
         {
+            foreach (var item in Items)
+            {
+                item.IsInPlaylist = false;
+            }
             Items.Clear();
             Save();
         }
@@ -98,7 +108,7 @@ namespace PanelApp
                         {
                             if (File.Exists(path))
                             {
-                                Items.Add(new VideoItem { FilePath = path, FileName = Path.GetFileName(path) });
+                                Items.Add(new VideoItem { FilePath = path, FileName = Path.GetFileName(path), IsInPlaylist = true });
                             }
                         }
                     }

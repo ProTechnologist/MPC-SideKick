@@ -13,6 +13,8 @@ using System.Windows.Threading;
 using Microsoft.WindowsAPICodePack.Shell;
 using System.Windows.Media.Imaging;
 using System.Windows.Interop;
+using System.ComponentModel;
+using System.Windows.Data;
 
 namespace PanelApp
 {
@@ -23,6 +25,7 @@ namespace PanelApp
         private bool _isPanelVisible = false;
         private AppSettings _settings;
         private System.Windows.Point _dragStartPoint;
+        private ICollectionView _playlistView;
 
         private const int TRIGGER_ZONE = 80;
         private const int WINDOW_OFFSET = 5;
@@ -47,6 +50,16 @@ namespace PanelApp
                 _stickyHelper.UpdatePosition();
                 LoadThumbnailsForPlaylist();
             };
+        }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _playlistView.Refresh();
+        }
+
+        private void ClearSearch_Click(object sender, RoutedEventArgs e)
+        {
+            SearchBox.Clear();
         }
 
         private async void LoadThumbnailsForPlaylist()

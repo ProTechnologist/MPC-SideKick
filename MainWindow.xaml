@@ -10,6 +10,7 @@
         Topmost="True" ResizeMode="NoResize" ShowInTaskbar="False">
     
     <Window.Resources>
+        <local:NotEmptyConverter x:Key="NotEmptyConverter" />
         <!-- Modern Ultra-Thin Floating ScrollBar (2px) -->
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="Width" Value="2"/>
@@ -89,12 +90,16 @@
                 
                 <!-- Icon Toolbar -->
                 <Grid Grid.Row="0" Margin="10,20,10,15">
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                        <Button Click="SelectFolder_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="8,0">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Click="SelectFolder_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="0,0,8,0" x:Name="FolderBtn">
                             <Button.ToolTip><ToolTip x:Name="FolderTooltip" Content="Select Video Folder"/></Button.ToolTip>
                             <Image Source="/folder-icon.png" Width="24" Height="24" Opacity="0.9"/>
                         </Button>
-                        
+                        <Button Click="Settings_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="0,0,8,0">
+                            <Image Source="/settings-icon.png" Width="24" Height="24" Opacity="0.9"/>
+                        </Button>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <ToggleButton x:Name="PinToggle" Click="PinToggle_Click" Background="Transparent" BorderThickness="0" Margin="8,0">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
@@ -113,10 +118,6 @@
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
-
-                        <Button Click="Settings_Click" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" Margin="8,0">
-                            <Image Source="/settings-icon.png" Width="24" Height="24" Opacity="0.9"/>
-                        </Button>
                     </StackPanel>
                 </Grid>
 
@@ -126,7 +127,7 @@
                         <TextBox x:Name="SearchBox" Background="Transparent" Foreground="White" BorderThickness="0" 
                                  Padding="10,6" TextChanged="SearchBox_TextChanged" VerticalContentAlignment="Center"
                                  CaretBrush="White" SelectionBrush="#44FFFFFF" FontSize="16"/>
-                        <TextBlock IsHitTestVisible="False" Text="Search..." VerticalAlignment="Center" 
+                        <TextBlock IsHitTestVisible="False" Text="Search your library..." VerticalAlignment="Center" 
                                    HorizontalAlignment="Left" Margin="12,0,0,0" Foreground="#33FFFFFF" FontSize="16">
                             <TextBlock.Style>
                                 <Style TargetType="{x:Type TextBlock}">
@@ -139,6 +140,24 @@
                                 </Style>
                             </TextBlock.Style>
                         </TextBlock>
+                        
+                        <!-- Clear Search Button -->
+                        <Button x:Name="ClearSearchBtn" Content="×" Click="ClearSearch_Click" 
+                                HorizontalAlignment="Right" VerticalAlignment="Center" 
+                                Margin="0,0,8,0" Width="20" Height="20" 
+                                Background="Transparent" Foreground="#66FFFFFF" FontWeight="Bold" FontSize="14"
+                                BorderThickness="0">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=SearchBox, Converter={StaticResource NotEmptyConverter}}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -172,8 +191,7 @@
                                         <Button x:Name="AddBtn" Content="+" Click="AddToPlaylist_Click" 
                                                 HorizontalAlignment="Right" VerticalAlignment="Top" 
                                                 Margin="8" Width="30" Height="30" 
-                                                Background="#99000000" Foreground="White" FontWeight="Bold" FontSize="18"
-                                                Visibility="Collapsed">
+                                                Background="#99000000" Foreground="White" FontWeight="Bold" FontSize="18">
                                             <Button.Template>
                                                 <ControlTemplate TargetType="Button">
                                                     <Border Background="{TemplateBinding Background}" CornerRadius="15">
@@ -181,15 +199,30 @@
                                                     </Border>
                                                 </ControlTemplate>
                                             </Button.Template>
+                                            <Button.Style>
+                                                <Style TargetType="Button">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsInPlaylist}" Value="False">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Content" Value="+"/>
+                                                            <Setter Property="Background" Value="#99000000"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsInPlaylist}" Value="True">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Setter Property="Content" Value="✓"/>
+                                                            <Setter Property="Background" Value="#9911CC11"/>
+                                                        </DataTrigger>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#CC000000"/>
+                                                        </Trigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
                                         </Button>
                                     </Grid>
                                 </Border>
                             </Grid>
-                            <DataTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True" SourceName="ItemGrid">
-                                    <Setter TargetName="AddBtn" Property="Visibility" Value="Visible"/>
-                                </Trigger>
-                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                     <ListView.ItemContainerStyle>
