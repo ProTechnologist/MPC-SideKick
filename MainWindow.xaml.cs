@@ -53,28 +53,35 @@ namespace PanelApp
             try
             {
                 _notifyIcon = new System.Windows.Forms.NotifyIcon();
-                
-                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
-                
-                if (File.Exists(iconPath))
-                {
-                    _notifyIcon.Icon = new System.Drawing.Icon(iconPath);
-                }
-                else
-                {
-                    _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
-                }
-
                 _notifyIcon.Visible = true;
                 _notifyIcon.Text = "MPC-BE Companion Panel";
+                
+                // Set a default system icon first
+                _notifyIcon.Icon = System.Drawing.SystemIcons.Application;
 
+                string iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "icon.ico");
+                if (File.Exists(iconPath))
+                {
+                    try { _notifyIcon.Icon = new System.Drawing.Icon(iconPath); } catch {}
+                }
+
+                // Add Context Menu
                 var contextMenu = new System.Windows.Forms.ContextMenuStrip();
                 contextMenu.Items.Add("Exit", null, (s, e) => System.Windows.Application.Current.Shutdown());
                 _notifyIcon.ContextMenuStrip = contextMenu;
+
+                _notifyIcon.Click += (s, e) => {
+                    if (e is System.Windows.Forms.MouseEventArgs mouseArgs && mouseArgs.Button == System.Windows.Forms.MouseButtons.Left)
+                    {
+                        this.Show();
+                        this.WindowState = WindowState.Normal;
+                        this.Activate();
+                    }
+                };
             }
             catch (Exception ex)
             {
-                System.Windows.MessageBox.Show($"Tray Icon Error: {ex.Message}");
+                File.WriteAllText("tray_error.txt", ex.ToString());
             }
         }
 
