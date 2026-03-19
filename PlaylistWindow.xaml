@@ -74,12 +74,9 @@
     <Grid x:Name="RootGrid" Background="Transparent">
         <Border x:Name="MainContent" Background="#F20A0E1A" CornerRadius="12,0,0,12" Margin="0,5,0,5" BorderBrush="#2244AAFF" BorderThickness="1,1,0,1">
             <Border.RenderTransform>
-                <TranslateTransform X="260"/>
+                <TranslateTransform X="280"/>
             </Border.RenderTransform>
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="25" ShadowDepth="0" Opacity="0.5" Color="#44AAFF"/>
-            </Border.Effect>
-            
+
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
