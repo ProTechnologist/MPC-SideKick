@@ -1,0 +1,24 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PanelApp", "PanelApp.csproj", "{BB459EC8-D750-5E2A-0101-1766EE7E14DD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BB459EC8-D750-5E2A-0101-1766EE7E14DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB459EC8-D750-5E2A-0101-1766EE7E14DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB459EC8-D750-5E2A-0101-1766EE7E14DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB459EC8-D750-5E2A-0101-1766EE7E14DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B4D0732B-C392-4D7F-95BC-20DB2C54950A}
+	EndGlobalSection
+EndGlobal
