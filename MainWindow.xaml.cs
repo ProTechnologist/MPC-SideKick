@@ -31,7 +31,9 @@ namespace PanelApp
         private bool _isPanelVisible = false;
         private const string MPC_PROCESS_NAME = "mpc-be64";
         private const string MPC_EXE_PATH = @"C:\Program Files\MPC-BE\mpc-be64.exe";
-        private const int TRIGGER_ZONE = 40; // Pixels from left edge to trigger slide-in
+        private const int TRIGGER_ZONE = 80; // Doubled from 40 to 80
+        private const int WINDOW_OFFSET = 5; // Pixels to move inside from the left
+        private const int HEIGHT_OFFSET = 10; // Pixels to subtract from height to avoid bottom edge
 
         private System.Windows.Forms.NotifyIcon? _notifyIcon;
 
@@ -145,9 +147,9 @@ namespace PanelApp
             }
 
             this.Show();
-            double screenX = rect.Left; // Inside the player
+            double screenX = rect.Left + WINDOW_OFFSET; // Moved inside 5px
             double screenY = rect.Top;
-            double screenHeight = rect.Height;
+            double screenHeight = rect.Height - HEIGHT_OFFSET; // Reduced height to avoid bottom edge
 
             WinApi.SetWindowPos(new WindowInteropHelper(this).Handle, IntPtr.Zero, (int)screenX, (int)screenY, (int)this.Width, (int)screenHeight, WinApi.SWP_NOZORDER | WinApi.SWP_SHOWWINDOW);
             this.Height = screenHeight;
