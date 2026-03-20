@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public enum StickSide
     {

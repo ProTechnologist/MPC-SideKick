@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public class AppSettings
     {

@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public class PlaylistManager
     {

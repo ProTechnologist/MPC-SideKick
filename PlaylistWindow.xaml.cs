@@ -16,7 +16,7 @@ using System.Windows.Interop;
 using System.ComponentModel;
 using System.Windows.Data;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public partial class PlaylistWindow : Window
     {

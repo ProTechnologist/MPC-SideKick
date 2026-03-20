@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public static class WinApi
     {

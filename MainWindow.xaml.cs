@@ -16,7 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using Microsoft.WindowsAPICodePack.Shell;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public partial class MainWindow : Window
     {

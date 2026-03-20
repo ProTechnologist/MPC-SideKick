@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <RootNamespace>PanelApp</RootNamespace>
+    <RootNamespace>MPC.SideKick</RootNamespace>
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 

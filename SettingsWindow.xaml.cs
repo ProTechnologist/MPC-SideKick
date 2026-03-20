@@ -1,7 +1,7 @@
 using System.Windows;
 using Microsoft.Win32;
 
-namespace PanelApp
+namespace MPC.SideKick
 {
     public partial class SettingsWindow : Window
     {
